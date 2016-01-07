@@ -81,7 +81,28 @@ func GetUser(c *gin.Context) {
 }
 
 func PostUser(c *gin.Context) {
-	// The futur code…
+	var dbmap = initDb()
+
+	var user User
+	c.Bind(&user)
+	if user.Firstname != "" && user.Lastname != "" {
+		if insert, _ := dbmap.Exec(`INSERT INTO user (firstname, lastname) VALUES (?, ?)`, user.Firstname, user.Lastname); insert != nil {
+			user_id, err := insert.LastInsertId()
+			if err == nil {
+				content := &User{
+					Id: user_id,
+					Firstname: user.Firstname,
+					Lastname: user.Lastname,
+				}
+				c.JSON(201, content)
+			} else {
+				checkErr(err, "Insert failed")
+			}
+		}
+	} else {
+		c.JSON(422, gin.H{"error": "fields are empty"})
+	}
+	// curl -i -X POST -H "Content-Type: application/json" -d "{ \"firstname\": \"Thea\", \"lastname\": \"Queen\" }" http://localhost:8080/api/v1/users
 }
 
 func UpdateUser(c *gin.Context) {
