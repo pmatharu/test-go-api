@@ -27,11 +27,6 @@ func main() {
 		v1.DELETE("/users/:id", DeleteUser)
 	}
 
-	v2 := r.Group("api/v2")
-	{
-		v2.GET("/users", GetUsers)
-	}
-
 	r.Run(":8088")
 }
 
@@ -53,14 +48,6 @@ func initDb() *gorp.DbMap {
 
 
 func GetUsers(c *gin.Context) {
-	//type Users []User
-	//var users = Users{
-	//	User{Id: 1, Firstname: "Oliver", Lastname: "Queen"},
-	//	User{Id: 2, Firstname: "Malcom", Lastname: "Merlyn"},
-	//}
-	//c.JSON(200, users)
-	// curl -i http://localhost:8080/api/v1/users
-
 	var dbmap = initDb()
 
 	var users []User
@@ -74,17 +61,21 @@ func GetUsers(c *gin.Context) {
 }
 
 func GetUser(c *gin.Context) {
+	var dbmap = initDb()
+
 	id := c.Params.ByName("id")
-	user_id, _ := strconv.ParseInt(id, 0, 64)
-	if user_id == 1 {
-		content := gin.H{"id": user_id, "firstname": "Oliver", "lastname": "Queen"}
-		c.JSON(200, content)
-	} else if user_id == 2 {
-		content := gin.H{"id": user_id, "firstname": "Malcom", "lastname": "Merlyn"}
+	var user User
+	err := dbmap.SelectOne(&user, "SELECT * FROM user WHERE id=?", id)
+	if err == nil {
+		user_id, _ := strconv.ParseInt(id, 0, 64)
+		content := &User{
+			Id: user_id,
+			Firstname: user.Firstname,
+			Lastname: user.Lastname,
+		}
 		c.JSON(200, content)
 	} else {
-		content := gin.H{"error": "user with id#" + id + " not found"}
-		c.JSON(404, content)
+		c.JSON(404, gin.H{"error": "user not found"})
 	}
 	// curl -i http://localhost:8080/api/v1/users/1
 }
@@ -92,6 +83,7 @@ func GetUser(c *gin.Context) {
 func PostUser(c *gin.Context) {
 	// The futur code…
 }
+
 func UpdateUser(c *gin.Context) {
 	// The futur code…
 }
