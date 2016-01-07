@@ -106,8 +106,51 @@ func PostUser(c *gin.Context) {
 }
 
 func UpdateUser(c *gin.Context) {
-	// The futur code…
+	var dbmap = initDb()
+
+	id := c.Params.ByName("id")
+	var user User
+	err := dbmap.SelectOne(&user, "SELECT * FROM user WHERE id=?", id)
+	if err == nil {
+		var json User
+		c.Bind(&json)
+		user_id, _ := strconv.ParseInt(id, 0, 64)
+		user := User{
+			Id: user_id,
+			Firstname: json.Firstname,
+			Lastname: json.Lastname,
+		}
+		if user.Firstname != "" && user.Lastname != ""{
+			_, err = dbmap.Update(&user)
+			if err == nil {
+				c.JSON(200, user)
+			} else {
+				checkErr(err, "Updated failed")
+			}
+		} else {
+			c.JSON(422, gin.H{"error": "fields are empty"})
+		}
+	} else {
+		c.JSON(404, gin.H{"error": "user not found"})
+	}
+	// curl -i -X PUT -H "Content-Type: application/json" -d "{ \"firstname\": \"Thea\", \"lastname\": \"Merlyn\" }" http://localhost:8080/api/v1/users/1
 }
+
 func DeleteUser(c *gin.Context) {
-	// The futur code…
+	var dbmap = initDb()
+
+	id := c.Params.ByName("id")
+	var user User
+	err := dbmap.SelectOne(&user, "SELECT id FROM user WHERE id=?", id)
+	if err == nil {
+		_, err = dbmap.Delete(&user)
+		if err == nil {
+			c.JSON(200, gin.H{"id #" + id: " deleted"})
+		} else {
+			checkErr(err, "Delete failed")
+		}
+	} else {
+		c.JSON(404, gin.H{"error": "user not found"})
+	}
+	// curl -i -X DELETE http://localhost:8080/api/v1/users/1
 }
